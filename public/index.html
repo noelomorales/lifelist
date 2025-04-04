@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="solarized-light">
 <head>
@@ -30,20 +31,23 @@
       <input id="searchInput" placeholder="Search..." class="input" />
     </label>
     <button id="newTypeBtn" class="button">➕ New List Type</button>
+    <button id="toggleMapBtn" class="button">🗺 Toggle Map</button>
   </div>
 
   <form id="entryForm" class="card mb-6"></form>
 
   <div id="entryList" class="space-y-4"></div>
 
-  <div class="my-6 flex justify-between items-center">
-    <h2 class="text-lg font-bold">🗺 Map of Observations</h2>
-    <label class="text-sm">
-      <input type="checkbox" id="mapScopeToggle" />
-      Show all lists
-    </label>
+  <div id="mapContainer" class="hidden my-6">
+    <div class="flex justify-between items-center mb-2">
+      <h2 class="text-lg font-bold">Map of Observations</h2>
+      <label class="text-sm">
+        <input type="checkbox" id="mapScopeToggle" />
+        Show all lists
+      </label>
+    </div>
+    <div id="map" style="height: 400px; border: 1px solid var(--highlight); border-radius: 6px;"></div>
   </div>
-  <div id="map" style="height: 400px; border: 1px solid var(--highlight);"></div>
 
   <div id="typeModal" class="modal hidden">
     <div class="modal-content">
