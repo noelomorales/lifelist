@@ -1,149 +1,112 @@
-const modeToggle = document.getElementById('modeToggle');
-const root = document.documentElement;
-
-function setTheme(init = false) {
-  const saved = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const isDark = saved === 'dark' || (!saved && prefersDark);
-  root.classList.toggle('dark', isDark);
-  if (!init) localStorage.setItem('theme', isDark ? 'light' : 'dark');
-}
-setTheme(true);
-
-modeToggle.addEventListener('click', () => {
-  root.classList.toggle('dark');
-  const newTheme = root.classList.contains('dark') ? 'dark' : 'light';
-  localStorage.setItem('theme', newTheme);
-});
-
+const lifelistSelect = document.getElementById('lifelistSelect');
 const form = document.getElementById('sightingForm');
 const sightingsList = document.getElementById('sightingsList');
-const searchInput = document.getElementById('searchInput');
-const autocompleteResults = document.getElementById('autocompleteResults');
 const filterTier = document.getElementById('filterTier');
+const modeToggle = document.getElementById('modeToggle');
 
 const birdName = document.getElementById('birdName');
 const sciName = document.getElementById('sciName');
 const family = document.getElementById('family');
 const order = document.getElementById('order');
 const birdImageInput = document.getElementById('birdImage');
+const notesField = document.getElementById('notes');
 
-let sightings = JSON.parse(localStorage.getItem('birdSightings')) || [];
+let allData = JSON.parse(localStorage.getItem('lifelistData')) || {};
+let currentList = lifelistSelect.value;
+if (!allData[currentList]) allData[currentList] = [];
 
-form.addEventListener('submit', async (e) => {
+function saveData() {
+  localStorage.setItem('lifelistData', JSON.stringify(allData));
+}
+
+function getSightings() {
+  return allData[currentList] || [];
+}
+
+function renderSightings() {
+  sightingsList.innerHTML = '';
+  const sightings = getSightings();
+  const tierFilter = filterTier.value;
+
+  sightings
+    .filter(s => tierFilter === 'all' || s.tier === tierFilter)
+    .forEach((entry, index) => {
+      const div = document.createElement('div');
+      div.className = 'card text-sm';
+      div.innerHTML = `
+        <strong>${entry.name}</strong><br/>
+        <em>${entry.sciName}</em><br/>
+        Family: ${entry.family}<br/>
+        Order: ${entry.order}<br/>
+        Tier: ${entry.tier}<br/>
+        Date: ${entry.date}<br/>
+        ${entry.notes ? `<div>📝 ${entry.notes}</div>` : ''}
+        <button onclick="deleteSighting(${index})" class="button mt-2">Delete</button>
+      `;
+      sightingsList.appendChild(div);
+    });
+}
+
+form.addEventListener('submit', (e) => {
   e.preventDefault();
-  const name = birdName.value;
-  const tier = document.getElementById('tier').value;
   const file = birdImageInput.files[0];
-  const now = new Date().toISOString().slice(0, 16);
+  const now = new Date();
+  const formatted = now.toLocaleString();
 
-  const saveSighting = (imageData = null) => {
-    const newSighting = {
-      name,
-      sciName: sciName.value,
-      family: family.value,
-      order: order.value,
-      tier,
-      image: imageData,
-      date: now
-    };
-    sightings.push(newSighting);
-    localStorage.setItem('birdSightings', JSON.stringify(sightings));
-    renderSightings();
-    form.reset();
+  const newSighting = {
+    name: birdName.value,
+    sciName: sciName.value,
+    family: family.value,
+    order: order.value,
+    tier: document.getElementById('tier').value,
+    notes: notesField.value,
+    date: formatted,
+    image: null
   };
 
   if (file) {
     const reader = new FileReader();
-    reader.onload = () => saveSighting(reader.result);
+    reader.onload = () => {
+      newSighting.image = reader.result;
+      allData[currentList].push(newSighting);
+      saveData();
+      renderSightings();
+      form.reset();
+    };
     reader.readAsDataURL(file);
   } else {
-    saveSighting(null);
+    allData[currentList].push(newSighting);
+    saveData();
+    renderSightings();
+    form.reset();
   }
 });
 
-searchInput.addEventListener('input', async () => {
-  const q = searchInput.value.trim();
-  if (q.length < 2) {
-    autocompleteResults.classList.add('hidden');
-    autocompleteResults.innerHTML = '';
-    return;
-  }
+window.deleteSighting = function(index) {
+  allData[currentList].splice(index, 1);
+  saveData();
+  renderSightings();
+};
 
-  const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-  const data = await res.json();
-  autocompleteResults.innerHTML = '';
-
-  data.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = `${item.name} (${item.sciName})`;
-    li.className = 'p-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer';
-    li.addEventListener('click', () => {
-      birdName.value = item.name;
-      sciName.value = item.sciName;
-      family.value = item.family;
-      order.value = item.order;
-      autocompleteResults.classList.add('hidden');
-      autocompleteResults.innerHTML = '';
-    });
-    autocompleteResults.appendChild(li);
-  });
-
-  autocompleteResults.classList.toggle('hidden', data.length === 0);
-});
-
-searchInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const first = autocompleteResults.querySelector('li');
-    if (first) first.click();
-  }
+lifelistSelect.addEventListener('change', () => {
+  currentList = lifelistSelect.value;
+  if (!allData[currentList]) allData[currentList] = [];
+  renderSightings();
 });
 
 filterTier.addEventListener('change', renderSightings);
 
-function renderSightings() {
-  const tierFilter = filterTier.value;
-  sightingsList.innerHTML = '';
+modeToggle.addEventListener('click', () => {
+  const isLight = document.body.classList.contains('solarized-light');
+  document.body.classList.toggle('solarized-light', !isLight);
+  document.body.classList.toggle('solarized-dark', isLight);
+  localStorage.setItem('theme', isLight ? 'dark' : 'light');
+});
 
-  sightings
-    .filter(({ tier }) => tierFilter === 'all' || tier === tierFilter)
-    .forEach((sighting, index) => {
-      const { name, sciName, family, order, tier, image, date } = sighting;
-      const card = document.createElement('div');
-      card.className = 'winamp-card p-4 rounded shadow flex flex-col sm:flex-row gap-4 items-start';
-
-      card.innerHTML = `
-        ${image ? `<img src="${image}" alt="${name}" class="w-24 h-24 object-cover rounded" />` : ''}
-        <div class="flex-1 text-xs">
-          <h2 class="text-md text-yellow-300">${name}</h2>
-          <p class="italic text-green-300">${sciName}</p>
-          <p>Family: ${family}</p>
-          <p>Order: ${order}</p>
-          <p>Tier: ${tier}</p>
-          <label class="block mt-2">
-            Date/Time:
-            <input type="datetime-local" value="${date || ''}"
-              class="border px-2 py-1 mt-1 w-full dark:bg-gray-700 dark:text-white text-xs"
-              onchange="updateDate(${index}, this.value)" />
-          </label>
-          <button onclick="deleteSighting(${index})" class="mt-2 text-red-400 text-xs underline">Delete</button>
-        </div>
-      `;
-      sightingsList.appendChild(card);
-    });
+function applyInitialTheme() {
+  const theme = localStorage.getItem('theme') || 'light';
+  document.body.classList.add(theme === 'light' ? 'solarized-light' : 'solarized-dark');
 }
 
-window.updateDate = function(index, newDate) {
-  sightings[index].date = newDate;
-  localStorage.setItem('birdSightings', JSON.stringify(sightings));
-  renderSightings();
-};
-
-window.deleteSighting = function(index) {
-  sightings.splice(index, 1);
-  localStorage.setItem('birdSightings', JSON.stringify(sightings));
-  renderSightings();
-};
-
+applyInitialTheme();
 renderSightings();
