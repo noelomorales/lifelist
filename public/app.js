@@ -309,3 +309,12 @@ document.getElementById('saveTypeBtn').onclick = () => {
   renderList();
   updateMap(false);
 };
+// Toggle map view visibility
+document.getElementById('toggleMapBtn').onclick = () => {
+  const container = document.getElementById('mapContainer');
+  container.classList.toggle('hidden');
+  if (!container.classList.contains('hidden')) {
+    setTimeout(() => map?.invalidateSize(), 100); // fix blank map tile bug
+    updateMap(document.getElementById('mapScopeToggle')?.checked);
+  }
+};
