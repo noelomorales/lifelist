@@ -19,18 +19,19 @@ const entryForm = document.getElementById('entryForm');
 const entryList = document.getElementById('entryList');
 const importInput = document.getElementById('importInput');
 
+// === Theme
 function applyTheme() {
   const theme = localStorage.getItem('theme') || 'light';
   document.documentElement.className = `solarized-${theme}`;
 }
 applyTheme();
-
 modeToggle.onclick = () => {
   const now = document.documentElement.className.includes('light') ? 'dark' : 'light';
   localStorage.setItem('theme', now);
   applyTheme();
 };
 
+// === Init
 function saveAll() {
   localStorage.setItem('lifelistTypes', JSON.stringify(lifelistTypes));
   localStorage.setItem('lifelistData', JSON.stringify(lifelistData));
@@ -52,8 +53,10 @@ lifelistSelect.onchange = () => {
   if (!lifelistData[currentType]) lifelistData[currentType] = [];
   renderForm();
   renderList();
+  updateMap(document.getElementById('mapScopeToggle')?.checked);
 };
 
+// === Dynamic form
 function renderForm() {
   const fields = lifelistTypes[currentType].fields;
   entryForm.innerHTML = '';
@@ -95,6 +98,7 @@ function renderForm() {
   entryForm.appendChild(submit);
 }
 
+// === Add/edit handler
 entryForm.onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById('entry-name').value.trim();
@@ -110,8 +114,8 @@ entryForm.onsubmit = async e => {
 
   for (let f of fields) {
     const el = document.getElementById(`entry-${f}`);
-    if (f === 'images') {
-      const selected = Array.from(el?.files || []);
+    if (f === 'images' && el?.files?.length) {
+      const selected = Array.from(el.files);
       for (const file of selected) {
         const reader = new FileReader();
         files.push(new Promise(resolve => {
@@ -141,6 +145,7 @@ entryForm.onsubmit = async e => {
   updateMap(document.getElementById('mapScopeToggle')?.checked);
 };
 
+// === Render list
 function renderList() {
   const query = searchInput.value.toLowerCase();
   entryList.innerHTML = '';
@@ -194,8 +199,7 @@ window.deleteEntry = function(index) {
 window.editEntry = function(index) {
   const entry = lifelistData[currentType][index];
   document.getElementById('entry-name').value = entry.name;
-  const fields = lifelistTypes[currentType].fields;
-  fields.forEach(f => {
+  lifelistTypes[currentType].fields.forEach(f => {
     if (f !== 'images') {
       const el = document.getElementById(`entry-${f}`);
       if (el) el.value = entry[f] || '';
@@ -203,9 +207,8 @@ window.editEntry = function(index) {
   });
 };
 
-// 🌍 MAP SETUP
+// === Map
 let map, markerGroup;
-
 function initMap() {
   if (map) return;
   map = L.map('map').setView([20, 0], 2);
@@ -214,13 +217,11 @@ function initMap() {
   }).addTo(map);
   markerGroup = L.layerGroup().addTo(map);
 }
-
 function updateMap(showAll = false) {
   if (!map) return;
   markerGroup.clearLayers();
   const keys = showAll ? Object.keys(lifelistData) : [currentType];
   const all = keys.flatMap(k => (lifelistData[k] || []).map(e => ({ ...e, _from: k })));
-
   all.forEach(e => {
     const loc = e.location;
     if (!loc) return;
@@ -230,15 +231,23 @@ function updateMap(showAll = false) {
     markerGroup.addLayer(marker);
   });
 }
-
 document.getElementById('mapScopeToggle').onchange = e => {
   updateMap(e.target.checked);
 };
-
 initMap();
 setTimeout(() => updateMap(false), 500);
 
-// 📸 EXIF support
+// Map toggle
+document.getElementById('toggleMapBtn').onclick = () => {
+  const container = document.getElementById('mapContainer');
+  container.classList.toggle('hidden');
+  if (!container.classList.contains('hidden')) {
+    setTimeout(() => map?.invalidateSize(), 100);
+    updateMap(document.getElementById('mapScopeToggle')?.checked);
+  }
+};
+
+// === EXIF GPS from image
 document.getElementById('entryForm').addEventListener('change', async e => {
   if (e.target.id.includes('images') && e.target.files[0]) {
     const coords = await exifr.gps(e.target.files[0]).catch(() => null);
@@ -251,7 +260,7 @@ document.getElementById('entryForm').addEventListener('change', async e => {
   }
 });
 
-// 📤 EXPORT / 📥 IMPORT
+// === Export/Import
 document.getElementById('exportBtn').onclick = () => {
   const blob = new Blob([JSON.stringify({ lifelistTypes, lifelistData }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -259,12 +268,8 @@ document.getElementById('exportBtn').onclick = () => {
   a.download = 'lifelists.json';
   a.click();
 };
-
-document.getElementById('importBtn').onclick = () => {
-  importInput.click();
-};
-
-importInput.onchange = (e) => {
+document.getElementById('importBtn').onclick = () => importInput.click();
+importInput.onchange = e => {
   const file = e.target.files[0];
   const reader = new FileReader();
   reader.onload = () => {
@@ -281,22 +286,19 @@ importInput.onchange = (e) => {
   reader.readAsText(file);
 };
 
-// NEW LIST TYPE CREATOR
+// === Create new list type
 const modal = document.getElementById('typeModal');
 document.getElementById('newTypeBtn').onclick = () => modal.classList.remove('hidden');
 document.getElementById('cancelTypeBtn').onclick = () => modal.classList.add('hidden');
-
-const fieldsContainer = document.getElementById('fieldsContainer');
 document.getElementById('addFieldBtn').onclick = () => {
   const input = document.createElement('input');
   input.placeholder = 'field name (e.g. crater)';
   input.className = 'input';
-  fieldsContainer.appendChild(input);
+  document.getElementById('fieldsContainer').appendChild(input);
 };
-
 document.getElementById('saveTypeBtn').onclick = () => {
   const name = document.getElementById('newTypeName').value;
-  const fields = Array.from(fieldsContainer.querySelectorAll('input')).map(i => i.value).filter(Boolean);
+  const fields = Array.from(document.querySelectorAll('#fieldsContainer input')).map(i => i.value).filter(Boolean);
   const key = name.toLowerCase().replace(/\s+/g, '_');
   lifelistTypes[key] = { name, fields };
   lifelistData[key] = [];
@@ -308,13 +310,4 @@ document.getElementById('saveTypeBtn').onclick = () => {
   renderForm();
   renderList();
   updateMap(false);
-};
-// Toggle map view visibility
-document.getElementById('toggleMapBtn').onclick = () => {
-  const container = document.getElementById('mapContainer');
-  container.classList.toggle('hidden');
-  if (!container.classList.contains('hidden')) {
-    setTimeout(() => map?.invalidateSize(), 100); // fix blank map tile bug
-    updateMap(document.getElementById('mapScopeToggle')?.checked);
-  }
 };
