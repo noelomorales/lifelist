@@ -7,8 +7,12 @@ export default async function handler(req, res) {
   }
 
   const results = [];
+  const baseUrl = req.headers.host.startsWith('localhost')
+    ? 'http://localhost:3000'
+    : `https://${req.headers.host}`;
+
   try {
-    const response = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/ebird_taxonomy.csv`);
+    const response = await fetch(`${baseUrl}/ebird_taxonomy.csv`);
     if (!response.ok) throw new Error('Failed to fetch taxonomy');
 
     const text = await response.text();
@@ -17,8 +21,6 @@ export default async function handler(req, res) {
 
     for (let i = 1; i < rows.length; i++) {
       const cols = rows[i].split(',');
-      if (!cols.length) continue;
-
       const row = Object.fromEntries(headers.map((h, j) => [h.trim(), cols[j]?.trim() || '']));
 
       if (row['PRIMARY_COM_NAME']?.toLowerCase().includes(q.toLowerCase())) {
