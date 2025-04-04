@@ -8,8 +8,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing or too-short query' });
   }
 
+  const filePath = path.join(process.cwd(), 'data', 'ebird_taxonomy.csv');
   const results = [];
-  const filePath = path.join(__dirname, '..', 'data', 'ebird_taxonomy.csv');
 
   try {
     fs.createReadStream(filePath)
