@@ -14,7 +14,7 @@
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold">🌍 Lifelists</h1>
     <div class="space-x-2">
-      <button id="modeToggle" class="button">🌓 Toggle Theme</button>
+      <button id="modeToggle" class="button">🌓 Theme</button>
       <button id="exportBtn" class="button">📤 Export</button>
       <input type="file" id="importInput" class="hidden" />
       <button id="importBtn" class="button">📥 Import</button>
@@ -22,14 +22,8 @@
   </div>
 
   <div class="flex flex-wrap gap-4 items-center mb-4">
-    <label>
-      List Type:
-      <select id="lifelistSelect"></select>
-    </label>
-    <label>
-      Filter:
-      <input id="searchInput" placeholder="Search..." class="input" />
-    </label>
+    <label>List Type: <select id="lifelistSelect"></select></label>
+    <label>Filter: <input id="searchInput" placeholder="Search..." class="input" /></label>
     <button id="newTypeBtn" class="button">➕ New List Type</button>
     <button id="toggleMapBtn" class="button">🗺 Toggle Map</button>
   </div>
@@ -38,15 +32,15 @@
 
   <div id="entryList" class="space-y-4"></div>
 
-  <div id="mapContainer" class="hidden my-6">
-    <div class="flex justify-between items-center mb-2">
+  <div id="mapContainer" class="map-modal hidden">
+    <div class="bg-[var(--card)] p-2 border-b border-[var(--highlight)] flex justify-between items-center">
       <h2 class="text-lg font-bold">Map of Observations</h2>
       <label class="text-sm">
         <input type="checkbox" id="mapScopeToggle" />
         Show all lists
       </label>
     </div>
-    <div id="map" style="height: 400px; border: 1px solid var(--highlight); border-radius: 6px;"></div>
+    <div id="map" style="height: 300px;"></div>
   </div>
 
   <div id="typeModal" class="modal hidden">
