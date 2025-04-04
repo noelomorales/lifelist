@@ -1,41 +1,103 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bird Lifelist</title>
-  <script defer src="app.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 text-gray-900 p-4">
-  <h1 class="text-2xl font-bold mb-4">Bird Lifelist</h1>
+const form = document.getElementById('sightingForm');
+const sightingsList = document.getElementById('sightingsList');
+const searchInput = document.getElementById('searchInput');
+const autocompleteResults = document.getElementById('autocompleteResults');
+const filterTier = document.getElementById('filterTier');
 
-  <div class="mb-4">
-    <input id="searchInput" type="text" placeholder="Search birds..." class="border p-2 w-full" autocomplete="off" />
-    <ul id="autocompleteResults" class="bg-white border rounded shadow mt-1 hidden max-h-60 overflow-y-auto"></ul>
-  </div>
+const birdName = document.getElementById('birdName');
+const sciName = document.getElementById('sciName');
+const family = document.getElementById('family');
+const order = document.getElementById('order');
 
-  <form id="sightingForm" class="bg-white p-4 rounded shadow mb-6">
-    <input id="birdName" type="text" placeholder="Bird Name" required class="border p-2 mb-2 w-full" />
-    <input id="sciName" type="text" placeholder="Scientific Name" class="border p-2 mb-2 w-full" readonly />
-    <input id="family" type="text" placeholder="Family" class="border p-2 mb-2 w-full" readonly />
-    <input id="order" type="text" placeholder="Order" class="border p-2 mb-2 w-full" readonly />
+let sightings = JSON.parse(localStorage.getItem('birdSightings')) || [];
 
-    <select id="tier" class="border p-2 mb-2 w-full">
-      <option value="wild">Wild</option>
-      <option value="captive">Captive</option>
-    </select>
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = birdName.value;
+  const tier = document.getElementById('tier').value;
+  const file = document.getElementById('birdImage').files[0];
+  if (!file) return;
 
-    <input id="birdImage" type="file" accept="image/*" required class="mb-2" />
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Sighting</button>
-  </form>
+  const reader = new FileReader();
+  reader.onload = () => {
+    const newSighting = {
+      name,
+      sciName: sciName.value,
+      family: family.value,
+      order: order.value,
+      tier,
+      image: reader.result
+    };
+    sightings.push(newSighting);
+    localStorage.setItem('birdSightings', JSON.stringify(sightings));
+    renderSightings();
+    form.reset();
+  };
+  reader.readAsDataURL(file);
+});
 
-  <select id="filterTier" class="border p-2 mb-4 w-full sm:w-1/4">
-    <option value="all">All</option>
-    <option value="wild">Wild</option>
-    <option value="captive">Captive</option>
-  </select>
+searchInput.addEventListener('input', async () => {
+  const q = searchInput.value.trim();
+  if (q.length < 2) {
+    autocompleteResults.classList.add('hidden');
+    autocompleteResults.innerHTML = '';
+    return;
+  }
 
-  <div id="sightingsList" class="space-y-4"></div>
-</body>
-</html>
+  const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  autocompleteResults.innerHTML = '';
+
+  data.forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = `${item.name} (${item.sciName})`;
+    li.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+    li.addEventListener('click', () => {
+      birdName.value = item.name;
+      sciName.value = item.sciName;
+      family.value = item.family;
+      order.value = item.order;
+      autocompleteResults.classList.add('hidden');
+      autocompleteResults.innerHTML = '';
+    });
+    autocompleteResults.appendChild(li);
+  });
+
+  autocompleteResults.classList.toggle('hidden', data.length === 0);
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const first = autocompleteResults.querySelector('li');
+    if (first) first.click();
+  }
+});
+
+filterTier.addEventListener('change', renderSightings);
+
+function renderSightings() {
+  const tierFilter = filterTier.value;
+  sightingsList.innerHTML = '';
+
+  sightings
+    .filter(({ tier }) => tierFilter === 'all' || tier === tierFilter)
+    .forEach(({ name, sciName, family, order, tier, image }) => {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-4 rounded shadow flex flex-col sm:flex-row gap-4 items-center';
+
+      card.innerHTML = `
+        <img src="${image}" alt="${name}" class="w-24 h-24 object-cover rounded" />
+        <div>
+          <h2 class="text-lg font-semibold">${name}</h2>
+          <p class="text-sm italic">${sciName}</p>
+          <p class="text-sm">Family: ${family}</p>
+          <p class="text-sm">Order: ${order}</p>
+          <p class="text-sm">Tier: ${tier}</p>
+        </div>
+      `;
+      sightingsList.appendChild(card);
+    });
+}
+
+renderSightings();
