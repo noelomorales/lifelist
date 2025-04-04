@@ -3,7 +3,7 @@
 <html lang="en" class="solarized-light">
 <head>
   <meta charset="UTF-8" />
-  <title>🦜 Ricardo Notebook</title>
+  <title>🦜 Lifelist Notebook</title>
   <script defer src="app.js"></script>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -15,21 +15,21 @@
     <aside class="sidebar">
       <h1 class="sidebar-title">🦜 Lifelists</h1>
       <button id="modeToggle" class="button">🌓 Theme</button>
-      <button id="exportBtn" class="button">📤 Export</button>
-      <input type="file" id="importInput" class="hidden" />
-      <button id="importBtn" class="button">📥 Import</button>
+      <label>List Type: <select id="lifelistSelect"></select></label>
       <button id="newTypeBtn" class="button">➕ New List Type</button>
+      <button id="importBtn" class="button">📥 Import</button>
+      <input type="file" id="importInput" class="hidden" />
+      <button id="exportBtn" class="button">📤 Export</button>
       <button id="toggleMapBtn" class="button">🗺 Toggle Map</button>
     </aside>
 
     <main class="main">
       <div class="toolbar">
-        <label>List Type: <select id="lifelistSelect"></select></label>
-        <label>Filter: <input id="searchInput" placeholder="Search..." class="input" /></label>
+        <label>Search: <input id="searchInput" placeholder="Filter..." class="input" /></label>
       </div>
-
       <form id="entryForm" class="card entry-form"></form>
       <div id="entryList" class="entries"></div>
+
       <div id="mapContainer" class="map-container hidden">
         <div class="map-header">
           <h2>Map of Observations</h2>
