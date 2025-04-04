@@ -1,3 +1,4 @@
+// === Data init
 let lifelistTypes = JSON.parse(localStorage.getItem('lifelistTypes')) || {
   birds: {
     name: 'Birds',
@@ -8,7 +9,6 @@ let lifelistTypes = JSON.parse(localStorage.getItem('lifelistTypes')) || {
     fields: ['composition', 'hardness', 'tier', 'notes', 'images', 'location']
   }
 };
-
 let lifelistData = JSON.parse(localStorage.getItem('lifelistData')) || {};
 let currentType = 'birds';
 
@@ -36,7 +36,6 @@ function saveAll() {
   localStorage.setItem('lifelistTypes', JSON.stringify(lifelistTypes));
   localStorage.setItem('lifelistData', JSON.stringify(lifelistData));
 }
-
 function populateLifelistSelect() {
   lifelistSelect.innerHTML = '';
   for (let key in lifelistTypes) {
@@ -91,14 +90,26 @@ function renderForm() {
     }
   });
 
+  const buttonRow = document.createElement('div');
+  buttonRow.className = 'flex gap-2';
+
   const submit = document.createElement('button');
   submit.textContent = 'Save Entry';
   submit.className = 'button w-full';
   submit.type = 'submit';
-  entryForm.appendChild(submit);
+  buttonRow.appendChild(submit);
+
+  const cancel = document.createElement('button');
+  cancel.textContent = 'Cancel';
+  cancel.className = 'button w-full';
+  cancel.type = 'button';
+  cancel.onclick = () => entryForm.reset();
+  buttonRow.appendChild(cancel);
+
+  entryForm.appendChild(buttonRow);
 }
 
-// === Add/edit handler
+// === Entry creation/edit
 entryForm.onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById('entry-name').value.trim();
@@ -145,7 +156,7 @@ entryForm.onsubmit = async e => {
   updateMap(document.getElementById('mapScopeToggle')?.checked);
 };
 
-// === Render list
+// === Render entries
 function renderList() {
   const query = searchInput.value.toLowerCase();
   entryList.innerHTML = '';
@@ -207,7 +218,7 @@ window.editEntry = function(index) {
   });
 };
 
-// === Map
+// === Map init
 let map, markerGroup;
 function initMap() {
   if (map) return;
@@ -235,19 +246,17 @@ document.getElementById('mapScopeToggle').onchange = e => {
   updateMap(e.target.checked);
 };
 initMap();
-setTimeout(() => updateMap(false), 500);
 
-// Map toggle
 document.getElementById('toggleMapBtn').onclick = () => {
   const container = document.getElementById('mapContainer');
   container.classList.toggle('hidden');
   if (!container.classList.contains('hidden')) {
-    setTimeout(() => map?.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 100);
     updateMap(document.getElementById('mapScopeToggle')?.checked);
   }
 };
 
-// === EXIF GPS from image
+// === EXIF GPS
 document.getElementById('entryForm').addEventListener('change', async e => {
   if (e.target.id.includes('images') && e.target.files[0]) {
     const coords = await exifr.gps(e.target.files[0]).catch(() => null);
@@ -260,7 +269,7 @@ document.getElementById('entryForm').addEventListener('change', async e => {
   }
 });
 
-// === Export/Import
+// === Export / Import
 document.getElementById('exportBtn').onclick = () => {
   const blob = new Blob([JSON.stringify({ lifelistTypes, lifelistData }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -286,10 +295,18 @@ importInput.onchange = e => {
   reader.readAsText(file);
 };
 
-// === Create new list type
+// === New list type
 const modal = document.getElementById('typeModal');
-document.getElementById('newTypeBtn').onclick = () => modal.classList.remove('hidden');
-document.getElementById('cancelTypeBtn').onclick = () => modal.classList.add('hidden');
+document.getElementById('newTypeBtn').onclick = () => {
+  modal.classList.remove('hidden');
+  fieldsContainer.innerHTML = '';
+  document.getElementById('newTypeName').value = '';
+};
+document.getElementById('cancelTypeBtn').onclick = () => {
+  modal.classList.add('hidden');
+  document.getElementById('newTypeName').value = '';
+  document.getElementById('fieldsContainer').innerHTML = '';
+};
 document.getElementById('addFieldBtn').onclick = () => {
   const input = document.createElement('input');
   input.placeholder = 'field name (e.g. crater)';
