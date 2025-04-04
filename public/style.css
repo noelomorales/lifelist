@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+body {
+  font-family: 'VT323', monospace;
+  transition: all 0.3s ease;
+}
+
+.solarized-light {
+  --bg: #fdf6e3;
+  --fg: #586e75;
+  --highlight: #b58900;
+  --card: #eee8d5;
+}
+
+.solarized-dark {
+  --bg: #002b36;
+  --fg: #93a1a1;
+  --highlight: #cb4b16;
+  --card: #073642;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+.input, select, textarea {
+  background-color: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--highlight);
+  padding: 0.3rem 0.5rem;
+  width: 100%;
+}
+
+.card {
+  background-color: var(--card);
+  border: 1px solid var(--highlight);
+  padding: 1rem;
+}
+
+.button {
+  background-color: var(--highlight);
+  color: var(--bg);
+  padding: 0.3rem 0.6rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: var(--card);
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  border: 2px solid var(--highlight);
+}
+
+#map {
+  width: 100%;
+  margin-top: 1rem;
+  border-radius: 4px;
+}
+
+.gallery img {
+  display: inline-block;
+  height: 60px;
+  margin-right: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.gallery img.primary {
+  border-color: var(--highlight);
+}
