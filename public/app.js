@@ -197,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.add('hidden');
     newTypeName.value = '';
     fieldsContainer.innerHTML = '';
+    console.log('Cancel button element:', cancelTypeBtn);
   };
   addFieldBtn.onclick = () => {
     const input = document.createElement('input');
