@@ -1,18 +1,19 @@
 const modeToggle = document.getElementById('modeToggle');
 const root = document.documentElement;
 
-const savedTheme = localStorage.getItem('theme');
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-  root.classList.add('dark');
-} else {
-  root.classList.remove('dark');
+function setTheme(init = false) {
+  const saved = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = saved === 'dark' || (!saved && prefersDark);
+  root.classList.toggle('dark', isDark);
+  if (!init) localStorage.setItem('theme', isDark ? 'light' : 'dark');
 }
+setTheme(true);
 
 modeToggle.addEventListener('click', () => {
-  const nowDark = root.classList.toggle('dark');
-  localStorage.setItem('theme', nowDark ? 'dark' : 'light');
+  root.classList.toggle('dark');
+  const newTheme = root.classList.contains('dark') ? 'dark' : 'light';
+  localStorage.setItem('theme', newTheme);
 });
 
 const form = document.getElementById('sightingForm');
@@ -116,7 +117,7 @@ function renderSightings() {
         ${image ? `<img src="${image}" alt="${name}" class="w-24 h-24 object-cover rounded" />` : ''}
         <div class="flex-1 text-xs">
           <h2 class="text-md text-yellow-300">${name}</h2>
-          <p class="italic">${sciName}</p>
+          <p class="italic text-green-300">${sciName}</p>
           <p>Family: ${family}</p>
           <p>Order: ${order}</p>
           <p>Tier: ${tier}</p>
