@@ -3,53 +3,50 @@
 <html lang="en" class="solarized-light">
 <head>
   <meta charset="UTF-8" />
-  <title>Lifelists</title>
+  <title>🦜 Lifelist Notebook</title>
   <script defer src="app.js"></script>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
 </head>
-<body class="p-4 font-mono text-sm">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">🌍 Lifelists</h1>
-    <div class="space-x-2">
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h1 class="sidebar-title">🦜 Lifelists</h1>
       <button id="modeToggle" class="button">🌓 Theme</button>
       <button id="exportBtn" class="button">📤 Export</button>
       <input type="file" id="importInput" class="hidden" />
       <button id="importBtn" class="button">📥 Import</button>
-    </div>
-  </div>
+      <button id="newTypeBtn" class="button">➕ New List Type</button>
+      <button id="toggleMapBtn" class="button">🗺 Toggle Map</button>
+    </aside>
 
-  <div class="flex flex-wrap gap-4 items-center mb-4">
-    <label>List Type: <select id="lifelistSelect"></select></label>
-    <label>Filter: <input id="searchInput" placeholder="Search..." class="input" /></label>
-    <button id="newTypeBtn" class="button">➕ New List Type</button>
-    <button id="toggleMapBtn" class="button">🗺 Toggle Map</button>
-  </div>
+    <main class="main">
+      <div class="toolbar">
+        <label>List Type: <select id="lifelistSelect"></select></label>
+        <label>Filter: <input id="searchInput" placeholder="Search..." class="input" /></label>
+      </div>
 
-  <form id="entryForm" class="card mb-6"></form>
-
-  <div id="entryList" class="space-y-4"></div>
-
-  <div id="mapContainer">
-    <div class="flex justify-between items-center p-2 border-b border-[var(--highlight)]">
-      <h2 class="text-lg font-bold">Map of Observations</h2>
-      <label class="text-sm">
-        <input type="checkbox" id="mapScopeToggle" />
-        Show all lists
-      </label>
-    </div>
-    <div id="map" style="height: 300px;"></div>
+      <form id="entryForm" class="card entry-form"></form>
+      <div id="entryList" class="entries"></div>
+      <div id="mapContainer" class="map-container hidden">
+        <div class="map-header">
+          <h2>Map of Observations</h2>
+          <label><input type="checkbox" id="mapScopeToggle" /> Show all lists</label>
+        </div>
+        <div id="map"></div>
+      </div>
+    </main>
   </div>
 
   <div id="typeModal" class="modal hidden">
     <div class="modal-content">
-      <h2 class="font-bold mb-2">Create New List Type</h2>
-      <input id="newTypeName" placeholder="Name (e.g. Space List)" class="input mb-2" />
+      <h2 class="modal-title">New List Type</h2>
+      <input id="newTypeName" placeholder="e.g. Space List" class="input mb-2" />
       <div id="fieldsContainer" class="space-y-2"></div>
       <button id="addFieldBtn" class="button">➕ Add Field</button>
-      <div class="mt-4 space-x-2">
+      <div class="modal-actions">
         <button id="saveTypeBtn" class="button">✅ Save</button>
         <button id="cancelTypeBtn" class="button">❌ Cancel</button>
       </div>
