@@ -1,66 +1,63 @@
-// === Theme toggle
+// ==== Theme ====
 function applyTheme() {
   const theme = localStorage.getItem('theme') || 'light';
   document.documentElement.className = `solarized-${theme}`;
 }
 applyTheme();
 document.getElementById('modeToggle').onclick = () => {
-  const theme = document.documentElement.className.includes('light') ? 'dark' : 'light';
-  localStorage.setItem('theme', theme);
+  const current = document.documentElement.className.includes('light') ? 'dark' : 'light';
+  localStorage.setItem('theme', current);
   applyTheme();
 };
 
-// === State
+// ==== App State ====
 let lifelistTypes = JSON.parse(localStorage.getItem('lifelistTypes')) || {
   birds: { name: 'Birds', fields: ['sciName', 'family', 'tier', 'notes', 'images', 'location'] }
 };
 let lifelistData = JSON.parse(localStorage.getItem('lifelistData')) || {};
 let currentType = 'birds';
 
-// === Elements
-const form = document.getElementById('entryForm');
-const entryList = document.getElementById('entryList');
 const lifelistSelect = document.getElementById('lifelistSelect');
+const entryForm = document.getElementById('entryForm');
+const entryList = document.getElementById('entryList');
 const searchInput = document.getElementById('searchInput');
 const importInput = document.getElementById('importInput');
 
-// === Helpers
+// === Helpers ===
 function saveAll() {
   localStorage.setItem('lifelistTypes', JSON.stringify(lifelistTypes));
   localStorage.setItem('lifelistData', JSON.stringify(lifelistData));
 }
 function populateLifelistSelect() {
   lifelistSelect.innerHTML = '';
-  for (let k in lifelistTypes) {
-    const o = document.createElement('option');
-    o.value = k;
-    o.textContent = lifelistTypes[k].name;
-    lifelistSelect.appendChild(o);
+  for (const key in lifelistTypes) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = lifelistTypes[key].name;
+    lifelistSelect.appendChild(opt);
   }
 }
+populateLifelistSelect();
 lifelistSelect.onchange = () => {
   currentType = lifelistSelect.value;
   renderForm();
   renderList();
   updateMap();
 };
-populateLifelistSelect();
-
-// === Form rendering
 function renderForm() {
   const fields = lifelistTypes[currentType].fields;
-  form.innerHTML = '';
+  entryForm.innerHTML = '';
+
   const name = document.createElement('input');
   name.id = 'entry-name';
   name.placeholder = 'Name';
   name.className = 'input mb-2';
-  form.appendChild(name);
+  entryForm.appendChild(name);
 
   fields.forEach(f => {
     let el;
-    if (f === 'notes') {
-      el = document.createElement('textarea');
-    } else if (f === 'images') {
+    if (f === 'notes') el = document.createElement('textarea');
+    else if (f === 'images') {
       el = document.createElement('input');
       el.type = 'file';
       el.multiple = true;
@@ -71,7 +68,7 @@ function renderForm() {
     el.id = `entry-${f}`;
     el.placeholder = f;
     el.className = 'input mb-2';
-    form.appendChild(el);
+    entryForm.appendChild(el);
   });
 
   const row = document.createElement('div');
@@ -86,27 +83,24 @@ function renderForm() {
   cancel.textContent = 'Cancel';
   cancel.className = 'button w-full';
   cancel.type = 'button';
-  cancel.onclick = () => form.reset();
+  cancel.onclick = () => entryForm.reset();
 
   row.appendChild(save);
   row.appendChild(cancel);
-  form.appendChild(row);
+  entryForm.appendChild(row);
 }
 
-form.onsubmit = async e => {
+entryForm.onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById('entry-name').value.trim();
   if (!name) return;
 
-  let list = lifelistData[currentType] || [];
+  const list = lifelistData[currentType] || [];
   let existing = list.find(e => e.name === name);
-  let editing = !!existing;
-  const entry = editing ? existing : { name, date: new Date().toLocaleString() };
-
+  const entry = existing || { name, date: new Date().toLocaleString(), images: [] };
   const fields = lifelistTypes[currentType].fields;
-  entry.images = entry.images || [];
 
-  for (let f of fields) {
+  for (const f of fields) {
     const el = document.getElementById(`entry-${f}`);
     if (f === 'images' && el?.files?.length) {
       for (const file of el.files) {
@@ -124,18 +118,17 @@ form.onsubmit = async e => {
     }
   }
 
-  if (!editing) lifelistData[currentType] = [...(lifelistData[currentType] || []), entry];
+  if (!existing) lifelistData[currentType].push(entry);
   saveAll();
-  form.reset();
+  entryForm.reset();
   renderList();
   updateMap();
 };
 
-// === List rendering
 function renderList() {
-  const list = lifelistData[currentType] || [];
   const query = searchInput.value.toLowerCase();
   entryList.innerHTML = '';
+  const list = lifelistData[currentType] || [];
 
   list.filter(e => Object.values(e).join(' ').toLowerCase().includes(query)).forEach((entry, index) => {
     const card = document.createElement('div');
@@ -144,23 +137,21 @@ function renderList() {
 
     lifelistTypes[currentType].fields.forEach(f => {
       if (f === 'images') {
-        if (entry.images?.length) {
-          const gallery = document.createElement('div');
-          gallery.className = 'gallery';
-          entry.images.forEach((img, i) => {
-            const image = document.createElement('img');
-            image.src = img.data;
-            image.className = img.primary ? 'primary' : '';
-            image.onclick = () => {
-              entry.images.forEach(p => (p.primary = false));
-              entry.images[i].primary = true;
-              saveAll();
-              renderList();
-            };
-            gallery.appendChild(image);
-          });
-          card.appendChild(gallery);
-        }
+        const gallery = document.createElement('div');
+        gallery.className = 'gallery mt-2';
+        (entry.images || []).forEach((img, i) => {
+          const image = document.createElement('img');
+          image.src = img.data;
+          image.className = img.primary ? 'primary' : '';
+          image.onclick = () => {
+            entry.images.forEach(p => (p.primary = false));
+            img.primary = true;
+            saveAll();
+            renderList();
+          };
+          gallery.appendChild(image);
+        });
+        card.appendChild(gallery);
       } else {
         card.innerHTML += `${f}: ${entry[f] || ''}<br/>`;
       }
@@ -190,7 +181,6 @@ window.editEntry = i => {
   });
 };
 
-// === Map
 let map, markerGroup;
 function initMap() {
   if (map) return;
@@ -200,6 +190,8 @@ function initMap() {
   }).addTo(map);
   markerGroup = L.layerGroup().addTo(map);
 }
+initMap();
+
 function updateMap(showAll = false) {
   if (!map) return;
   markerGroup.clearLayers();
@@ -212,18 +204,17 @@ function updateMap(showAll = false) {
     markerGroup.addLayer(marker);
   });
 }
-initMap();
-document.getElementById('mapScopeToggle').onchange = e => updateMap(e.target.checked);
 document.getElementById('toggleMapBtn').onclick = () => {
-  const box = document.getElementById('mapContainer');
-  box.classList.toggle('visible');
-  box.style.display = box.classList.contains('visible') ? 'block' : 'none';
+  const container = document.getElementById('mapContainer');
+  container.classList.toggle('visible');
+  container.style.display = container.classList.contains('visible') ? 'block' : 'none';
   setTimeout(() => map.invalidateSize(), 100);
   updateMap(document.getElementById('mapScopeToggle')?.checked);
 };
+document.getElementById('mapScopeToggle').onchange = e => updateMap(e.target.checked);
 
 // === EXIF
-document.getElementById('entryForm').addEventListener('change', async e => {
+entryForm.addEventListener('change', async e => {
   if (e.target.id.includes('images') && e.target.files[0]) {
     const coords = await exifr.gps(e.target.files[0]).catch(() => null);
     if (coords?.latitude && coords?.longitude) {
@@ -233,7 +224,6 @@ document.getElementById('entryForm').addEventListener('change', async e => {
   }
 });
 
-// === Import/export
 document.getElementById('exportBtn').onclick = () => {
   const blob = new Blob([JSON.stringify({ lifelistTypes, lifelistData }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -241,6 +231,7 @@ document.getElementById('exportBtn').onclick = () => {
   a.download = 'lifelists.json';
   a.click();
 };
+
 document.getElementById('importBtn').onclick = () => importInput.click();
 importInput.onchange = e => {
   const file = e.target.files[0];
@@ -259,7 +250,7 @@ importInput.onchange = e => {
   reader.readAsText(file);
 };
 
-// === Create new list type
+// === Create List Type Modal
 const modal = document.getElementById('typeModal');
 document.getElementById('newTypeBtn').onclick = () => {
   modal.classList.remove('hidden');
@@ -273,7 +264,7 @@ document.getElementById('cancelTypeBtn').onclick = () => {
 };
 document.getElementById('addFieldBtn').onclick = () => {
   const input = document.createElement('input');
-  input.placeholder = 'field name (e.g. crater)';
+  input.placeholder = 'field name (e.g. order)';
   input.className = 'input';
   document.getElementById('fieldsContainer').appendChild(input);
 };
