@@ -13,19 +13,17 @@ const birdImageInput = document.getElementById('birdImage');
 
 let sightings = JSON.parse(localStorage.getItem('birdSightings')) || [];
 
-// === Theme Toggle ===
+// === Theme toggle
 const savedTheme = localStorage.getItem('theme');
 if (savedTheme === 'dark') {
   document.documentElement.classList.add('dark');
-  modeToggle.checked = true;
 }
-modeToggle.addEventListener('change', () => {
-  const dark = modeToggle.checked;
-  document.documentElement.classList.toggle('dark', dark);
-  localStorage.setItem('theme', dark ? 'dark' : 'light');
+modeToggle.addEventListener('click', () => {
+  const nowDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', nowDark ? 'dark' : 'light');
 });
 
-// === Form Submit ===
+// === Submit
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = birdName.value;
@@ -33,6 +31,7 @@ form.addEventListener('submit', async (e) => {
   const file = birdImageInput.files[0];
 
   const saveSighting = (imageData = null) => {
+    const now = new Date().toISOString();
     const newSighting = {
       name,
       sciName: sciName.value,
@@ -40,8 +39,8 @@ form.addEventListener('submit', async (e) => {
       order: order.value,
       tier,
       image: imageData,
-      date: new Date().toISOString(),
-      submittedAt: new Date().toISOString()
+      date: now,
+      submittedAt: now
     };
     sightings.push(newSighting);
     localStorage.setItem('birdSightings', JSON.stringify(sightings));
@@ -58,7 +57,7 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-// === Search + Autocomplete ===
+// === Search
 searchInput.addEventListener('input', async () => {
   const q = searchInput.value.trim();
   if (q.length < 2) {
@@ -99,7 +98,7 @@ searchInput.addEventListener('keydown', (e) => {
 
 filterTier.addEventListener('change', renderSightings);
 
-// === Render ===
+// === Render
 function renderSightings() {
   const tierFilter = filterTier.value;
   sightingsList.innerHTML = '';
@@ -108,11 +107,15 @@ function renderSightings() {
     .filter(({ tier }) => tierFilter === 'all' || tier === tierFilter)
     .forEach((sighting, index) => {
       const { name, sciName, family, order, tier, image, date, submittedAt } = sighting;
+
+      const parsedDate = new Date(date);
+      const parsedLogged = new Date(submittedAt);
+      const validDate = isNaN(parsedDate) ? new Date() : parsedDate;
+      const formatted = validDate.toISOString().slice(0, 16);
+      const submitted = isNaN(parsedLogged) ? '' : parsedLogged.toLocaleString();
+
       const card = document.createElement('div');
       card.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow flex flex-col sm:flex-row gap-4 items-start';
-
-      const formattedDate = new Date(date).toISOString().slice(0, 16);
-      const submittedLabel = submittedAt ? new Date(submittedAt).toLocaleString() : '';
 
       card.innerHTML = `
         ${image ? `<img src="${image}" alt="${name}" class="w-24 h-24 object-cover rounded" />` : ''}
@@ -124,11 +127,11 @@ function renderSightings() {
           <p>Tier: ${tier}</p>
           <label class="block mt-2">
             Date/Time:
-            <input type="datetime-local" value="${formattedDate}"
+            <input type="datetime-local" value="${formatted}"
               class="border px-2 py-1 mt-1 w-full dark:bg-gray-700 dark:text-white text-sm"
               onchange="updateDate(${index}, this.value)" />
           </label>
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Logged: ${submittedLabel}</p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Logged: ${submitted}</p>
           <button onclick="deleteSighting(${index})" class="mt-2 text-red-600 dark:text-red-400 text-sm underline">Delete</button>
         </div>
       `;
@@ -136,7 +139,6 @@ function renderSightings() {
     });
 }
 
-// === Update + Delete ===
 window.updateDate = function(index, newDate) {
   sightings[index].date = new Date(newDate).toISOString();
   localStorage.setItem('birdSightings', JSON.stringify(sightings));
