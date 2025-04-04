@@ -14,12 +14,22 @@ const birdImageInput = document.getElementById('birdImage');
 let sightings = JSON.parse(localStorage.getItem('birdSightings')) || [];
 
 // === Dark mode toggle
-if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-  document.documentElement.classList.add('dark');
+const modeToggle = document.getElementById('modeToggle');
+const root = document.documentElement;
+
+const savedTheme = localStorage.getItem('theme');
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+  root.classList.add('dark');
+} else {
+  root.classList.remove('dark');
 }
+
 modeToggle.addEventListener('click', () => {
-  const isDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  const nowDark = root.classList.toggle('dark');
+  localStorage.setItem('theme', nowDark ? 'dark' : 'light');
+});
 });
 
 // === Submit handler
