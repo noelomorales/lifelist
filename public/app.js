@@ -13,25 +13,26 @@ const birdImageInput = document.getElementById('birdImage');
 
 let sightings = JSON.parse(localStorage.getItem('birdSightings')) || [];
 
-// === Theme toggle
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'dark') {
+// === Dark mode toggle
+if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
   document.documentElement.classList.add('dark');
 }
 modeToggle.addEventListener('click', () => {
-  const nowDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('theme', nowDark ? 'dark' : 'light');
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
 });
 
-// === Submit
+// === Submit handler
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = birdName.value;
   const tier = document.getElementById('tier').value;
   const file = birdImageInput.files[0];
 
+  const now = new Date();
+  const localTime = now.toISOString().slice(0, 16); // format: "YYYY-MM-DDTHH:mm"
+
   const saveSighting = (imageData = null) => {
-    const now = new Date().toLocaleString();
     const newSighting = {
       name,
       sciName: sciName.value,
@@ -39,8 +40,7 @@ form.addEventListener('submit', async (e) => {
       order: order.value,
       tier,
       image: imageData,
-      date: now,
-      submittedAt: now
+      date: localTime
     };
     sightings.push(newSighting);
     localStorage.setItem('birdSightings', JSON.stringify(sightings));
@@ -98,7 +98,7 @@ searchInput.addEventListener('keydown', (e) => {
 
 filterTier.addEventListener('change', renderSightings);
 
-// === Render
+// === Render list
 function renderSightings() {
   const tierFilter = filterTier.value;
   sightingsList.innerHTML = '';
@@ -106,13 +106,7 @@ function renderSightings() {
   sightings
     .filter(({ tier }) => tierFilter === 'all' || tier === tierFilter)
     .forEach((sighting, index) => {
-      const { name, sciName, family, order, tier, image, date, submittedAt } = sighting;
-
-      const parsedDate = new Date(date);
-      const parsedLogged = new Date(submittedAt);
-      const formatted = date?.slice(0, 16) || '';
-      const submitted = isNaN(parsedLogged) ? '' : parsedLogged.toLocaleString();
-
+      const { name, sciName, family, order, tier, image, date } = sighting;
       const card = document.createElement('div');
       card.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow flex flex-col sm:flex-row gap-4 items-start';
 
@@ -126,20 +120,19 @@ function renderSightings() {
           <p>Tier: ${tier}</p>
           <label class="block mt-2">
             Date/Time:
-            <input type="datetime-local" value="${formatted}"
+            <input type="datetime-local" value="${date || ''}"
               class="border px-2 py-1 mt-1 w-full dark:bg-gray-700 dark:text-white text-sm"
               onchange="updateDate(${index}, this.value)" />
           </label>
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Logged: ${submitted}</p>
-          <button onclick="deleteSighting(${index})" class="mt-2 text-red-600 dark:text-red-400 text-sm underline">Delete</button>
         </div>
+        <button onclick="deleteSighting(${index})" class="text-red-600 dark:text-red-400 text-sm underline mt-2">Delete</button>
       `;
       sightingsList.appendChild(card);
     });
 }
 
 window.updateDate = function(index, newDate) {
-  sightings[index].date = new Date(newDate).toISOString();
+  sightings[index].date = newDate;
   localStorage.setItem('birdSightings', JSON.stringify(sightings));
   renderSightings();
 };
