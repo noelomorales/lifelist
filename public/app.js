@@ -1,116 +1,99 @@
-// === Data init
-let lifelistTypes = JSON.parse(localStorage.getItem('lifelistTypes')) || {
-  birds: {
-    name: 'Birds',
-    fields: ['sciName', 'family', 'order', 'tier', 'notes', 'images', 'location']
-  },
-  rocks: {
-    name: 'Rocks',
-    fields: ['composition', 'hardness', 'tier', 'notes', 'images', 'location']
-  }
-};
-let lifelistData = JSON.parse(localStorage.getItem('lifelistData')) || {};
-let currentType = 'birds';
-
-const modeToggle = document.getElementById('modeToggle');
-const lifelistSelect = document.getElementById('lifelistSelect');
-const searchInput = document.getElementById('searchInput');
-const entryForm = document.getElementById('entryForm');
-const entryList = document.getElementById('entryList');
-const importInput = document.getElementById('importInput');
-
-// === Theme
+// === Theme toggle
 function applyTheme() {
   const theme = localStorage.getItem('theme') || 'light';
   document.documentElement.className = `solarized-${theme}`;
 }
 applyTheme();
-modeToggle.onclick = () => {
-  const now = document.documentElement.className.includes('light') ? 'dark' : 'light';
-  localStorage.setItem('theme', now);
+document.getElementById('modeToggle').onclick = () => {
+  const theme = document.documentElement.className.includes('light') ? 'dark' : 'light';
+  localStorage.setItem('theme', theme);
   applyTheme();
 };
 
-// === Init
+// === State
+let lifelistTypes = JSON.parse(localStorage.getItem('lifelistTypes')) || {
+  birds: { name: 'Birds', fields: ['sciName', 'family', 'tier', 'notes', 'images', 'location'] }
+};
+let lifelistData = JSON.parse(localStorage.getItem('lifelistData')) || {};
+let currentType = 'birds';
+
+// === Elements
+const form = document.getElementById('entryForm');
+const entryList = document.getElementById('entryList');
+const lifelistSelect = document.getElementById('lifelistSelect');
+const searchInput = document.getElementById('searchInput');
+const importInput = document.getElementById('importInput');
+
+// === Helpers
 function saveAll() {
   localStorage.setItem('lifelistTypes', JSON.stringify(lifelistTypes));
   localStorage.setItem('lifelistData', JSON.stringify(lifelistData));
 }
 function populateLifelistSelect() {
   lifelistSelect.innerHTML = '';
-  for (let key in lifelistTypes) {
-    const opt = document.createElement('option');
-    opt.value = key;
-    opt.textContent = lifelistTypes[key].name;
-    lifelistSelect.appendChild(opt);
+  for (let k in lifelistTypes) {
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = lifelistTypes[k].name;
+    lifelistSelect.appendChild(o);
   }
 }
-populateLifelistSelect();
-
 lifelistSelect.onchange = () => {
   currentType = lifelistSelect.value;
-  if (!lifelistData[currentType]) lifelistData[currentType] = [];
   renderForm();
   renderList();
-  updateMap(document.getElementById('mapScopeToggle')?.checked);
+  updateMap();
 };
+populateLifelistSelect();
 
-// === Dynamic form
+// === Form rendering
 function renderForm() {
   const fields = lifelistTypes[currentType].fields;
-  entryForm.innerHTML = '';
-
-  const nameInput = document.createElement('input');
-  nameInput.placeholder = 'Name';
-  nameInput.className = 'input mb-2';
-  nameInput.id = 'entry-name';
-  entryForm.appendChild(nameInput);
+  form.innerHTML = '';
+  const name = document.createElement('input');
+  name.id = 'entry-name';
+  name.placeholder = 'Name';
+  name.className = 'input mb-2';
+  form.appendChild(name);
 
   fields.forEach(f => {
+    let el;
     if (f === 'notes') {
-      const textarea = document.createElement('textarea');
-      textarea.placeholder = f;
-      textarea.className = 'input mb-2';
-      textarea.id = `entry-${f}`;
-      entryForm.appendChild(textarea);
+      el = document.createElement('textarea');
     } else if (f === 'images') {
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      fileInput.multiple = true;
-      fileInput.className = 'input mb-2';
-      fileInput.id = `entry-${f}`;
-      entryForm.appendChild(fileInput);
+      el = document.createElement('input');
+      el.type = 'file';
+      el.multiple = true;
+      el.accept = 'image/*';
     } else {
-      const input = document.createElement('input');
-      input.placeholder = f;
-      input.className = 'input mb-2';
-      input.id = `entry-${f}`;
-      entryForm.appendChild(input);
+      el = document.createElement('input');
     }
+    el.id = `entry-${f}`;
+    el.placeholder = f;
+    el.className = 'input mb-2';
+    form.appendChild(el);
   });
 
-  const buttonRow = document.createElement('div');
-  buttonRow.className = 'flex gap-2';
+  const row = document.createElement('div');
+  row.className = 'flex gap-2';
 
-  const submit = document.createElement('button');
-  submit.textContent = 'Save Entry';
-  submit.className = 'button w-full';
-  submit.type = 'submit';
-  buttonRow.appendChild(submit);
+  const save = document.createElement('button');
+  save.textContent = 'Save Entry';
+  save.className = 'button w-full';
+  save.type = 'submit';
 
   const cancel = document.createElement('button');
   cancel.textContent = 'Cancel';
   cancel.className = 'button w-full';
   cancel.type = 'button';
-  cancel.onclick = () => entryForm.reset();
-  buttonRow.appendChild(cancel);
+  cancel.onclick = () => form.reset();
 
-  entryForm.appendChild(buttonRow);
+  row.appendChild(save);
+  row.appendChild(cancel);
+  form.appendChild(row);
 }
 
-// === Entry creation/edit
-entryForm.onsubmit = async e => {
+form.onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById('entry-name').value.trim();
   if (!name) return;
@@ -121,104 +104,93 @@ entryForm.onsubmit = async e => {
   const entry = editing ? existing : { name, date: new Date().toLocaleString() };
 
   const fields = lifelistTypes[currentType].fields;
-  const files = [];
+  entry.images = entry.images || [];
 
   for (let f of fields) {
     const el = document.getElementById(`entry-${f}`);
     if (f === 'images' && el?.files?.length) {
-      const selected = Array.from(el.files);
-      for (const file of selected) {
+      for (const file of el.files) {
         const reader = new FileReader();
-        files.push(new Promise(resolve => {
+        await new Promise(resolve => {
           reader.onload = () => {
-            entry.images = entry.images || [];
             entry.images.push({ data: reader.result, primary: entry.images.length === 0 });
             resolve();
           };
           reader.readAsDataURL(file);
-        }));
+        });
       }
     } else {
       entry[f] = el?.value || '';
     }
   }
 
-  await Promise.all(files);
-
-  if (!editing) {
-    list.push(entry);
-    lifelistData[currentType] = list;
-  }
-
+  if (!editing) lifelistData[currentType] = [...(lifelistData[currentType] || []), entry];
   saveAll();
-  entryForm.reset();
+  form.reset();
   renderList();
-  updateMap(document.getElementById('mapScopeToggle')?.checked);
+  updateMap();
 };
 
-// === Render entries
+// === List rendering
 function renderList() {
+  const list = lifelistData[currentType] || [];
   const query = searchInput.value.toLowerCase();
   entryList.innerHTML = '';
-  const list = (lifelistData[currentType] || []).filter(e =>
-    Object.values(e).join(' ').toLowerCase().includes(query)
-  );
 
-  list.forEach((entry, index) => {
+  list.filter(e => Object.values(e).join(' ').toLowerCase().includes(query)).forEach((entry, index) => {
     const card = document.createElement('div');
-    card.className = 'card text-sm';
+    card.className = 'card';
     card.innerHTML = `<strong>${entry.name}</strong><br/>`;
 
     lifelistTypes[currentType].fields.forEach(f => {
-      if (f === 'images' && Array.isArray(entry.images)) {
-        const gallery = document.createElement('div');
-        gallery.className = 'gallery mt-2';
-        entry.images.forEach((img, i) => {
-          const image = document.createElement('img');
-          image.src = img.data;
-          image.className = img.primary ? 'primary' : '';
-          image.title = img.primary ? 'Primary Image' : 'Click to set as primary';
-          image.onclick = () => {
-            entry.images.forEach(p => p.primary = false);
-            entry.images[i].primary = true;
-            saveAll();
-            renderList();
-          };
-          gallery.appendChild(image);
-        });
-        card.appendChild(gallery);
-      } else if (f !== 'images') {
+      if (f === 'images') {
+        if (entry.images?.length) {
+          const gallery = document.createElement('div');
+          gallery.className = 'gallery';
+          entry.images.forEach((img, i) => {
+            const image = document.createElement('img');
+            image.src = img.data;
+            image.className = img.primary ? 'primary' : '';
+            image.onclick = () => {
+              entry.images.forEach(p => (p.primary = false));
+              entry.images[i].primary = true;
+              saveAll();
+              renderList();
+            };
+            gallery.appendChild(image);
+          });
+          card.appendChild(gallery);
+        }
+      } else {
         card.innerHTML += `${f}: ${entry[f] || ''}<br/>`;
       }
     });
 
     card.innerHTML += `<em>${entry.date}</em><br/>`;
     card.innerHTML += `
-      <button class="button mt-2 mr-2" onclick="editEntry(${index})">✏️ Edit</button>
+      <button class="button mt-2" onclick="editEntry(${index})">✏️ Edit</button>
       <button class="button mt-2" onclick="deleteEntry(${index})">🗑 Delete</button>`;
     entryList.appendChild(card);
   });
 }
 
-window.deleteEntry = function(index) {
-  lifelistData[currentType].splice(index, 1);
+window.deleteEntry = i => {
+  lifelistData[currentType].splice(i, 1);
   saveAll();
   renderList();
-  updateMap(document.getElementById('mapScopeToggle')?.checked);
+  updateMap();
 };
 
-window.editEntry = function(index) {
-  const entry = lifelistData[currentType][index];
+window.editEntry = i => {
+  const entry = lifelistData[currentType][i];
   document.getElementById('entry-name').value = entry.name;
   lifelistTypes[currentType].fields.forEach(f => {
-    if (f !== 'images') {
-      const el = document.getElementById(`entry-${f}`);
-      if (el) el.value = entry[f] || '';
-    }
+    const el = document.getElementById(`entry-${f}`);
+    if (el && f !== 'images') el.value = entry[f] || '';
   });
 };
 
-// === Map init
+// === Map
 let map, markerGroup;
 function initMap() {
   if (map) return;
@@ -234,42 +206,34 @@ function updateMap(showAll = false) {
   const keys = showAll ? Object.keys(lifelistData) : [currentType];
   const all = keys.flatMap(k => (lifelistData[k] || []).map(e => ({ ...e, _from: k })));
   all.forEach(e => {
-    const loc = e.location;
-    if (!loc) return;
-    const [lat, lng] = loc.split(',').map(Number);
+    const [lat, lng] = (e.location || '').split(',').map(Number);
     if (isNaN(lat) || isNaN(lng)) return;
     const marker = L.marker([lat, lng]).bindPopup(`<b>${e.name}</b><br/>${e._from}`);
     markerGroup.addLayer(marker);
   });
 }
-document.getElementById('mapScopeToggle').onchange = e => {
-  updateMap(e.target.checked);
-};
 initMap();
-
+document.getElementById('mapScopeToggle').onchange = e => updateMap(e.target.checked);
 document.getElementById('toggleMapBtn').onclick = () => {
-  const container = document.getElementById('mapContainer');
-  container.classList.toggle('hidden');
-  if (!container.classList.contains('hidden')) {
-    setTimeout(() => map.invalidateSize(), 100);
-    updateMap(document.getElementById('mapScopeToggle')?.checked);
-  }
+  const box = document.getElementById('mapContainer');
+  box.classList.toggle('visible');
+  box.style.display = box.classList.contains('visible') ? 'block' : 'none';
+  setTimeout(() => map.invalidateSize(), 100);
+  updateMap(document.getElementById('mapScopeToggle')?.checked);
 };
 
-// === EXIF GPS
+// === EXIF
 document.getElementById('entryForm').addEventListener('change', async e => {
   if (e.target.id.includes('images') && e.target.files[0]) {
     const coords = await exifr.gps(e.target.files[0]).catch(() => null);
     if (coords?.latitude && coords?.longitude) {
-      const locField = document.getElementById('entry-location');
-      if (locField && !locField.value) {
-        locField.value = `${coords.latitude},${coords.longitude}`;
-      }
+      const loc = document.getElementById('entry-location');
+      if (loc && !loc.value) loc.value = `${coords.latitude},${coords.longitude}`;
     }
   }
 });
 
-// === Export / Import
+// === Import/export
 document.getElementById('exportBtn').onclick = () => {
   const blob = new Blob([JSON.stringify({ lifelistTypes, lifelistData }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -290,17 +254,17 @@ importInput.onchange = e => {
     currentType = lifelistSelect.value;
     renderForm();
     renderList();
-    updateMap(false);
+    updateMap();
   };
   reader.readAsText(file);
 };
 
-// === New list type
+// === Create new list type
 const modal = document.getElementById('typeModal');
 document.getElementById('newTypeBtn').onclick = () => {
   modal.classList.remove('hidden');
-  fieldsContainer.innerHTML = '';
   document.getElementById('newTypeName').value = '';
+  document.getElementById('fieldsContainer').innerHTML = '';
 };
 document.getElementById('cancelTypeBtn').onclick = () => {
   modal.classList.add('hidden');
@@ -326,5 +290,5 @@ document.getElementById('saveTypeBtn').onclick = () => {
   currentType = key;
   renderForm();
   renderList();
-  updateMap(false);
+  updateMap();
 };
