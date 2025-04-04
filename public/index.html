@@ -1,16 +1,16 @@
 
 <!DOCTYPE html>
-<html lang="en" class="solarized-light">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>🦜 Lifelist Notebook</title>
-  <script defer src="app.js"></script>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
+  <script defer src="app.js"></script>
 </head>
-<body>
+<body class="solarized-light">
   <div class="layout">
     <aside class="sidebar">
       <h1 class="sidebar-title">🦜 Lifelists</h1>
@@ -25,7 +25,7 @@
 
     <main class="main">
       <div class="toolbar">
-        <label>Search: <input id="searchInput" placeholder="Filter..." class="input" /></label>
+        <label>Search: <input id="searchInput" class="input" placeholder="Search..." /></label>
       </div>
       <form id="entryForm" class="card entry-form"></form>
       <div id="entryList" class="entries"></div>
@@ -43,7 +43,7 @@
   <div id="typeModal" class="modal hidden">
     <div class="modal-content">
       <h2 class="modal-title">New List Type</h2>
-      <input id="newTypeName" placeholder="e.g. Space List" class="input mb-2" />
+      <input id="newTypeName" class="input mb-2" placeholder="e.g. Space List" />
       <div id="fieldsContainer" class="space-y-2"></div>
       <button id="addFieldBtn" class="button">➕ Add Field</button>
       <div class="modal-actions">
