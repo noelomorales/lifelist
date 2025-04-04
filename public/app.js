@@ -197,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.add('hidden');
     newTypeName.value = '';
     fieldsContainer.innerHTML = '';
-    console.log('Cancel button element:', cancelTypeBtn);
   };
   addFieldBtn.onclick = () => {
     const input = document.createElement('input');
@@ -219,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderList();
     updateMap();
   };
+  console.log('Cancel button element:', cancelTypeBtn);
 
   // === Export/Import
   exportBtn.onclick = () => {
