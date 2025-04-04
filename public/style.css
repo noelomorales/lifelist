@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 body {
@@ -67,11 +68,21 @@ body {
   border: 2px solid var(--highlight);
 }
 
+.map-modal {
+  position: fixed;
+  top: 5%;
+  left: 5%;
+  width: 90%;
+  background: var(--card);
+  z-index: 999;
+  border: 2px solid var(--highlight);
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.5);
+}
+
 #map {
-  height: 400px;
+  height: 300px;
   width: 100%;
-  margin-top: 1rem;
-  border-radius: 4px;
   touch-action: auto;
 }
 
