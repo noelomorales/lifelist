@@ -110,8 +110,7 @@ function renderSightings() {
 
       const parsedDate = new Date(date);
       const parsedLogged = new Date(submittedAt);
-      const validDate = isNaN(parsedDate) ? new Date() : parsedDate;
-      const formatted = validDate.toISOString().slice(0, 16);
+      const formatted = date?.slice(0, 16) || '';
       const submitted = isNaN(parsedLogged) ? '' : parsedLogged.toLocaleString();
 
       const card = document.createElement('div');
