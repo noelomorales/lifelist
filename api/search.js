@@ -1,9 +1,3 @@
-console.log('[DEBUG] Search handler loaded');
-
-export default function handler(req, res) {
-  const { q } = req.query;
-  console.log('[DEBUG] Query:', q);
-
 import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
@@ -14,20 +8,20 @@ export default function handler(req, res) {
     return res.status(400).json({ error: 'Missing or too-short query' });
   }
 
-  const results = [];
   const filePath = path.join(process.cwd(), 'public', 'ebird_taxonomy.csv');
+  const results = [];
 
   fs.createReadStream(filePath)
-    .pipe(csv({ separator: ',', skipLines: 0 }))
+    .pipe(csv())
     .on('data', (row) => {
-      const commonName = row['PRIMARY_COM_NAME']?.toLowerCase().replace(/^"|"$/g, '');
-      if (commonName && commonName.includes(q.toLowerCase())) {
+      const name = row['English name']?.toLowerCase();
+      if (name && name.includes(q.toLowerCase())) {
         results.push({
-          name: row['PRIMARY_COM_NAME'].replace(/^"|"$/g, ''),
-          sciName: row['SCI_NAME']?.replace(/^"|"$/g, ''),
-          family: row['FAMILY']?.replace(/^"|"$/g, ''),
-          order: row['ORDER1']?.replace(/^"|"$/g, ''),
-          code: row['SPECIES_CODE']?.replace(/^"|"$/g, ''),
+          name: row['English name'],
+          sciName: row['scientific name'],
+          family: row['family'],
+          order: row['order'],
+          code: row['species_code']
         });
       }
     })
@@ -35,6 +29,6 @@ export default function handler(req, res) {
       res.status(200).json(results.slice(0, 20));
     })
     .on('error', (err) => {
-      res.status(500).json({ error: 'CSV read error', details: err.message });
+      res.status(500).json({ error: 'CSV read failed', details: err.message });
     });
 }
