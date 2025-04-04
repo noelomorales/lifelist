@@ -1,3 +1,9 @@
+console.log('[DEBUG] Search handler loaded');
+
+export default function handler(req, res) {
+  const { q } = req.query;
+  console.log('[DEBUG] Query:', q);
+
 import fs from 'fs';
 import path from 'path';
 import csv from 'csv-parser';
