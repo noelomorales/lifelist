@@ -1,43 +1,34 @@
+import fs from 'fs';
+import path from 'path';
 import csv from 'csv-parser';
 
-export default async function handler(req, res) {
+export default function handler(req, res) {
   const { q } = req.query;
   if (!q || q.length < 2) {
     return res.status(400).json({ error: 'Missing or too-short query' });
   }
 
   const results = [];
-  const baseUrl = req.headers.host.startsWith('localhost')
-    ? 'http://localhost:3000'
-    : `https://${req.headers.host}`;
+  const filePath = path.join(process.cwd(), 'public', 'ebird_taxonomy.csv');
 
-  try {
-    const response = await fetch(`${baseUrl}/ebird_taxonomy.csv`);
-    if (!response.ok) throw new Error('Failed to fetch taxonomy');
-
-    const text = await response.text();
-    const rows = text.split('\n');
-    const headers = rows[0].split(',');
-
-    for (let i = 1; i < rows.length; i++) {
-      const cols = rows[i].split(',');
-      const row = Object.fromEntries(headers.map((h, j) => [h.trim(), cols[j]?.trim() || '']));
-
-      if (row['PRIMARY_COM_NAME']?.toLowerCase().includes(q.toLowerCase())) {
+  fs.createReadStream(filePath)
+    .pipe(csv({ separator: ',', skipLines: 0 }))
+    .on('data', (row) => {
+      const commonName = row['PRIMARY_COM_NAME']?.toLowerCase().replace(/^"|"$/g, '');
+      if (commonName && commonName.includes(q.toLowerCase())) {
         results.push({
-          name: row['PRIMARY_COM_NAME'],
-          sciName: row['SCI_NAME'],
-          family: row['FAMILY'],
-          order: row['ORDER1'],
-          code: row['SPECIES_CODE'],
+          name: row['PRIMARY_COM_NAME'].replace(/^"|"$/g, ''),
+          sciName: row['SCI_NAME']?.replace(/^"|"$/g, ''),
+          family: row['FAMILY']?.replace(/^"|"$/g, ''),
+          order: row['ORDER1']?.replace(/^"|"$/g, ''),
+          code: row['SPECIES_CODE']?.replace(/^"|"$/g, ''),
         });
       }
-
-      if (results.length >= 20) break;
-    }
-
-    res.status(200).json(results);
-  } catch (err) {
-    res.status(500).json({ error: 'Search failed', details: err.message });
-  }
+    })
+    .on('end', () => {
+      res.status(200).json(results.slice(0, 20));
+    })
+    .on('error', (err) => {
+      res.status(500).json({ error: 'CSV read error', details: err.message });
+    });
 }
