@@ -1,19 +1,3 @@
-const form = document.getElementById('sightingForm');
-const sightingsList = document.getElementById('sightingsList');
-const searchInput = document.getElementById('searchInput');
-const autocompleteResults = document.getElementById('autocompleteResults');
-const filterTier = document.getElementById('filterTier');
-const modeToggle = document.getElementById('modeToggle');
-
-const birdName = document.getElementById('birdName');
-const sciName = document.getElementById('sciName');
-const family = document.getElementById('family');
-const order = document.getElementById('order');
-const birdImageInput = document.getElementById('birdImage');
-
-let sightings = JSON.parse(localStorage.getItem('birdSightings')) || [];
-
-// === Dark mode toggle
 const modeToggle = document.getElementById('modeToggle');
 const root = document.documentElement;
 
@@ -30,17 +14,27 @@ modeToggle.addEventListener('click', () => {
   const nowDark = root.classList.toggle('dark');
   localStorage.setItem('theme', nowDark ? 'dark' : 'light');
 });
-});
 
-// === Submit handler
+const form = document.getElementById('sightingForm');
+const sightingsList = document.getElementById('sightingsList');
+const searchInput = document.getElementById('searchInput');
+const autocompleteResults = document.getElementById('autocompleteResults');
+const filterTier = document.getElementById('filterTier');
+
+const birdName = document.getElementById('birdName');
+const sciName = document.getElementById('sciName');
+const family = document.getElementById('family');
+const order = document.getElementById('order');
+const birdImageInput = document.getElementById('birdImage');
+
+let sightings = JSON.parse(localStorage.getItem('birdSightings')) || [];
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = birdName.value;
   const tier = document.getElementById('tier').value;
   const file = birdImageInput.files[0];
-
-  const now = new Date();
-  const localTime = now.toISOString().slice(0, 16); // format: "YYYY-MM-DDTHH:mm"
+  const now = new Date().toISOString().slice(0, 16);
 
   const saveSighting = (imageData = null) => {
     const newSighting = {
@@ -50,7 +44,7 @@ form.addEventListener('submit', async (e) => {
       order: order.value,
       tier,
       image: imageData,
-      date: localTime
+      date: now
     };
     sightings.push(newSighting);
     localStorage.setItem('birdSightings', JSON.stringify(sightings));
@@ -67,7 +61,6 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-// === Search
 searchInput.addEventListener('input', async () => {
   const q = searchInput.value.trim();
   if (q.length < 2) {
@@ -108,7 +101,6 @@ searchInput.addEventListener('keydown', (e) => {
 
 filterTier.addEventListener('change', renderSightings);
 
-// === Render list
 function renderSightings() {
   const tierFilter = filterTier.value;
   sightingsList.innerHTML = '';
@@ -118,12 +110,12 @@ function renderSightings() {
     .forEach((sighting, index) => {
       const { name, sciName, family, order, tier, image, date } = sighting;
       const card = document.createElement('div');
-      card.className = 'bg-white dark:bg-gray-800 p-4 rounded shadow flex flex-col sm:flex-row gap-4 items-start';
+      card.className = 'winamp-card p-4 rounded shadow flex flex-col sm:flex-row gap-4 items-start';
 
       card.innerHTML = `
         ${image ? `<img src="${image}" alt="${name}" class="w-24 h-24 object-cover rounded" />` : ''}
-        <div class="flex-1 text-sm">
-          <h2 class="text-lg font-semibold">${name}</h2>
+        <div class="flex-1 text-xs">
+          <h2 class="text-md text-yellow-300">${name}</h2>
           <p class="italic">${sciName}</p>
           <p>Family: ${family}</p>
           <p>Order: ${order}</p>
@@ -131,11 +123,11 @@ function renderSightings() {
           <label class="block mt-2">
             Date/Time:
             <input type="datetime-local" value="${date || ''}"
-              class="border px-2 py-1 mt-1 w-full dark:bg-gray-700 dark:text-white text-sm"
+              class="border px-2 py-1 mt-1 w-full dark:bg-gray-700 dark:text-white text-xs"
               onchange="updateDate(${index}, this.value)" />
           </label>
+          <button onclick="deleteSighting(${index})" class="mt-2 text-red-400 text-xs underline">Delete</button>
         </div>
-        <button onclick="deleteSighting(${index})" class="text-red-600 dark:text-red-400 text-sm underline mt-2">Delete</button>
       `;
       sightingsList.appendChild(card);
     });
