@@ -68,16 +68,11 @@ body {
   border: 2px solid var(--highlight);
 }
 
-.map-modal {
-  position: fixed;
-  top: 5%;
-  left: 5%;
-  width: 90%;
-  background: var(--card);
-  z-index: 999;
-  border: 2px solid var(--highlight);
+#mapContainer {
+  display: none;
+  margin-top: 1rem;
+  border: 1px solid var(--highlight);
   border-radius: 6px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.5);
 }
 
 #map {
