@@ -6,21 +6,39 @@
   <title>Bird Lifelist</title>
   <script defer src="app.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Press Start 2P', system-ui, sans-serif;
+    }
+    .winamp-card {
+      border: 2px solid #00faff;
+      background: linear-gradient(to bottom, #1b1f27, #2e3140);
+      box-shadow: 0 0 12px #00faff;
+    }
+    .winamp-button {
+      background: linear-gradient(to bottom, #00faff, #00c2ff);
+      border: 2px solid #ffffff;
+      color: black;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      box-shadow: 0 0 4px white;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100 p-4 transition-colors">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold">Bird Lifelist</h1>
-    <button id="modeToggle" class="text-sm px-3 py-1 border rounded dark:border-white border-black hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-      🌓 Toggle Mode
-    </button>
+<body class="bg-gradient-to-br from-yellow-100 via-sky-100 to-lime-100 dark:from-gray-900 dark:via-gray-800 dark:to-black text-gray-900 dark:text-gray-100 min-h-screen p-4 transition-colors">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl text-blue-700 dark:text-blue-300">🐦 Bird Lifelist</h1>
+    <button id="modeToggle" class="winamp-button">🌓 Toggle Mode</button>
   </div>
 
   <div class="mb-4">
-    <input id="searchInput" type="text" placeholder="Search birds..." class="border p-2 w-full dark:bg-gray-800 dark:text-white" autocomplete="off" />
-    <ul id="autocompleteResults" class="bg-white dark:bg-gray-800 border rounded shadow mt-1 hidden max-h-60 overflow-y-auto text-sm"></ul>
+    <input id="searchInput" type="text" placeholder="Search birds..." class="border p-2 w-full bg-white dark:bg-gray-800 dark:text-white text-xs" autocomplete="off" />
+    <ul id="autocompleteResults" class="bg-white dark:bg-gray-800 border rounded shadow mt-1 hidden max-h-60 overflow-y-auto text-xs"></ul>
   </div>
 
-  <form id="sightingForm" class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-6">
+  <form id="sightingForm" class="winamp-card p-4 rounded mb-6 text-xs">
     <input id="birdName" type="text" placeholder="Bird Name" required class="border p-2 mb-2 w-full dark:bg-gray-700 dark:text-white" />
     <input id="sciName" type="text" placeholder="Scientific Name" class="border p-2 mb-2 w-full dark:bg-gray-700 dark:text-white" readonly />
     <input id="family" type="text" placeholder="Family" class="border p-2 mb-2 w-full dark:bg-gray-700 dark:text-white" readonly />
@@ -32,10 +50,10 @@
     </select>
 
     <input id="birdImage" type="file" accept="image/*" class="mb-2" />
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Sighting</button>
+    <button type="submit" class="winamp-button w-full">Add Sighting</button>
   </form>
 
-  <select id="filterTier" class="border p-2 mb-4 w-full sm:w-1/4 dark:bg-gray-700 dark:text-white">
+  <select id="filterTier" class="border p-2 mb-4 w-full sm:w-1/4 dark:bg-gray-700 dark:text-white text-xs">
     <option value="all">All</option>
     <option value="wild">Wild</option>
     <option value="captive">Captive</option>
