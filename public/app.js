@@ -31,7 +31,7 @@ form.addEventListener('submit', async (e) => {
   const file = birdImageInput.files[0];
 
   const saveSighting = (imageData = null) => {
-    const now = new Date().toISOString();
+    const now = new Date().toLocaleString();
     const newSighting = {
       name,
       sciName: sciName.value,
